@@ -1,6 +1,6 @@
 export default {
   root: './',
-  base: '/Assignment-5/',
+  base: '/cse160-asgn5/',
   server: {
     port: 3000,
     open: true
