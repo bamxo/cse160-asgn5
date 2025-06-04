@@ -15,13 +15,78 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '16'
+          node-version: '18'
           
-      - name: Install dependencies
-        run: npm ci
+      - name: Create dist directory
+        run: mkdir -p dist
         
-      - name: Build
-        run: npm run build
+      - name: Copy static files
+        run: |
+          cp -r assets dist/
+          cp main.js dist/
+        
+      - name: Create index.html for deployment
+        run: |
+          cat > dist/index.html << 'EOL'
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>Cooking Island (Lite)</title>
+              <style>
+                  body {
+                      margin: 0;
+                      overflow: hidden;
+                      font-family: Arial, sans-serif;
+                  }
+                  canvas {
+                      display: block;
+                  }
+                  #loadingMessage {
+                      position: absolute;
+                      top: 50%;
+                      left: 50%;
+                      transform: translate(-50%, -50%);
+                      font-size: 24px;
+                      color: white;
+                      background-color: rgba(0, 0, 0, 0.7);
+                      padding: 20px;
+                      border-radius: 10px;
+                      text-align: center;
+                  }
+                  #startButton {
+                      position: absolute;
+                      top: 50%;
+                      left: 50%;
+                      transform: translate(-50%, -50%);
+                      font-size: 18px;
+                      padding: 10px 20px;
+                      background-color: #4CAF50;
+                      color: white;
+                      border: none;
+                      border-radius: 5px;
+                      cursor: pointer;
+                      display: none;
+                  }
+              </style>
+          </head>
+          <body>
+              <div id="loadingMessage">Loading 3D scene...</div>
+              <button id="startButton" style="display:none;">Click to Start</button>
+              <script type="importmap">
+                  {
+                      "imports": {
+                          "three": "https://cdn.jsdelivr.net/npm/three@0.177.0/build/three.module.js",
+                          "three/examples/jsm/controls/PointerLockControls.js": "https://cdn.jsdelivr.net/npm/three@0.177.0/examples/jsm/controls/PointerLockControls.js",
+                          "three/examples/jsm/loaders/GLTFLoader.js": "https://cdn.jsdelivr.net/npm/three@0.177.0/examples/jsm/loaders/GLTFLoader.js"
+                      }
+                  }
+              </script>
+              <script type="module" src="main.js"></script>
+          </body>
+          </html>
+          EOL
         
       - name: Deploy
         uses: JamesIves/github-pages-deploy-action@v4

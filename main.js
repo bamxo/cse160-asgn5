@@ -2,6 +2,9 @@ import * as THREE from 'three';
 import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
+// Check if we're running in a browser deployment environment
+const isBrowserDeployment = typeof window !== 'undefined' && !window.isNodeEnvironment;
+
 // Create loading manager for assets
 const loadingManager = new THREE.LoadingManager();
 loadingManager.onProgress = (url, loaded, total) => {
