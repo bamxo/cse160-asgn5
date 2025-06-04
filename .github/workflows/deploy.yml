@@ -29,12 +29,19 @@ jobs:
       - name: Copy assets
         run: cp -r assets dist/
         
-      - name: Create modified main.js with fixed imports
+      - name: Create main.js with correct imports for deployment
         run: |
-          # Create a modified version of main.js with fixed imports
-          sed "s|import \\* as THREE from 'three';|import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.177.0/build/three.module.js';|" main.js |
-          sed "s|import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls.js';|import { PointerLockControls } from 'https://cdn.jsdelivr.net/npm/three@0.177.0/examples/jsm/controls/PointerLockControls.js';|" |
-          sed "s|import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';|import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.177.0/examples/jsm/loaders/GLTFLoader.js';|" > dist/main.js
+          # Create a completely new main.js file with correct imports
+          cat > dist/main.js << 'EOL'
+          import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.177.0/build/three.module.js';
+          import { PointerLockControls } from 'https://cdn.jsdelivr.net/npm/three@0.177.0/examples/jsm/controls/PointerLockControls.js';
+          import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.177.0/examples/jsm/loaders/GLTFLoader.js';
+
+          // Rest of the main.js content
+          EOL
+          
+          # Append the rest of main.js (skipping the first 3 lines which are the imports)
+          tail -n +4 main.js >> dist/main.js
         
       - name: Create index.html for deployment
         run: |
