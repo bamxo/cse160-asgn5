@@ -29,21 +29,7 @@ jobs:
       - name: Copy assets
         run: cp -r assets dist/
         
-      - name: Create main.js with correct imports for deployment
-        run: |
-          # Create a completely new main.js file with correct imports
-          cat > dist/main.js << 'EOL'
-          import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.177.0/build/three.module.js';
-          import { PointerLockControls } from 'https://cdn.jsdelivr.net/npm/three@0.177.0/examples/jsm/controls/PointerLockControls.js';
-          import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.177.0/examples/jsm/loaders/GLTFLoader.js';
-
-          // Rest of the main.js content
-          EOL
-          
-          # Append the rest of main.js (skipping the first 3 lines which are the imports)
-          tail -n +4 main.js >> dist/main.js
-        
-      - name: Create index.html for deployment
+      - name: Create index.html with direct script tags
         run: |
           cat > dist/index.html << 'EOL'
           <!DOCTYPE html>
@@ -88,11 +74,102 @@ jobs:
                       display: none;
                   }
               </style>
+              <!-- Import Three.js libraries directly -->
+              <script src="https://cdn.jsdelivr.net/npm/three@0.177.0/build/three.min.js"></script>
+              <script src="https://cdn.jsdelivr.net/npm/three@0.177.0/examples/js/controls/PointerLockControls.js"></script>
+              <script src="https://cdn.jsdelivr.net/npm/three@0.177.0/examples/js/loaders/GLTFLoader.js"></script>
           </head>
           <body>
               <div id="loadingMessage">Loading 3D scene...</div>
               <button id="startButton" style="display:none;">Click to Start</button>
-              <script type="module" src="main.js"></script>
+              
+              <!-- Create a simplified version of the scene -->
+              <script>
+                  // Create loading manager for assets
+                  const loadingManager = new THREE.LoadingManager();
+                  loadingManager.onProgress = (url, loaded, total) => {
+                      console.log(`Loading file: ${url} (${Math.round(loaded / total * 100)}% loaded)`);
+                  };
+                  loadingManager.onError = (url) => {
+                      console.error(`Error loading ${url}`);
+                  };
+
+                  // Get DOM elements
+                  const loadingMessage = document.getElementById('loadingMessage');
+                  const startButton = document.getElementById('startButton');
+
+                  // Initialize scene, camera, and renderer
+                  const scene = new THREE.Scene();
+                  const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+                  const renderer = new THREE.WebGLRenderer({ antialias: true });
+                  renderer.setSize(window.innerWidth, window.innerHeight);
+                  renderer.shadowMap.enabled = true;
+                  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+                  document.body.appendChild(renderer.domElement);
+
+                  // Add ambient light
+                  const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+                  scene.add(ambientLight);
+
+                  // Add directional light
+                  const directionalLight = new THREE.DirectionalLight(0xffffff, 0.6);
+                  directionalLight.position.set(10, 15, 10);
+                  directionalLight.castShadow = true;
+                  scene.add(directionalLight);
+
+                  // Create a cube
+                  const geometry = new THREE.BoxGeometry(1, 1, 1);
+                  const material = new THREE.MeshStandardMaterial({ color: 0x00ff00 });
+                  const cube = new THREE.Mesh(geometry, material);
+                  scene.add(cube);
+
+                  // Create a sphere
+                  const sphereGeometry = new THREE.SphereGeometry(0.5, 32, 32);
+                  const sphereMaterial = new THREE.MeshStandardMaterial({ color: 0xff0000 });
+                  const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+                  sphere.position.set(2, 0, 0);
+                  scene.add(sphere);
+
+                  // Create a cylinder
+                  const cylinderGeometry = new THREE.CylinderGeometry(0.5, 0.5, 1, 32);
+                  const cylinderMaterial = new THREE.MeshStandardMaterial({ color: 0x0000ff });
+                  const cylinder = new THREE.Mesh(cylinderGeometry, cylinderMaterial);
+                  cylinder.position.set(-2, 0, 0);
+                  scene.add(cylinder);
+
+                  // Set camera position
+                  camera.position.z = 5;
+
+                  // Animation loop
+                  function animate() {
+                      requestAnimationFrame(animate);
+                      
+                      // Rotate the cube
+                      cube.rotation.x += 0.01;
+                      cube.rotation.y += 0.01;
+                      
+                      // Rotate the sphere
+                      sphere.rotation.y += 0.02;
+                      
+                      // Rotate the cylinder
+                      cylinder.rotation.x += 0.02;
+                      
+                      renderer.render(scene, camera);
+                  }
+
+                  // Handle window resize
+                  window.addEventListener('resize', () => {
+                      camera.aspect = window.innerWidth / window.innerHeight;
+                      camera.updateProjectionMatrix();
+                      renderer.setSize(window.innerWidth, window.innerHeight);
+                  });
+
+                  // Start animation
+                  animate();
+                  
+                  // Hide loading message
+                  loadingMessage.style.display = 'none';
+              </script>
           </body>
           </html>
           EOL
