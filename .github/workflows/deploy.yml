@@ -26,10 +26,15 @@ jobs:
       - name: Create dist directory
         run: mkdir -p dist
         
-      - name: Copy static files
+      - name: Copy assets
+        run: cp -r assets dist/
+        
+      - name: Create modified main.js with fixed imports
         run: |
-          cp -r assets dist/
-          cp main.js dist/
+          # Create a modified version of main.js with fixed imports
+          sed "s|import \\* as THREE from 'three';|import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.177.0/build/three.module.js';|" main.js |
+          sed "s|import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls.js';|import { PointerLockControls } from 'https://cdn.jsdelivr.net/npm/three@0.177.0/examples/jsm/controls/PointerLockControls.js';|" |
+          sed "s|import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';|import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.177.0/examples/jsm/loaders/GLTFLoader.js';|" > dist/main.js
         
       - name: Create index.html for deployment
         run: |
@@ -80,15 +85,6 @@ jobs:
           <body>
               <div id="loadingMessage">Loading 3D scene...</div>
               <button id="startButton" style="display:none;">Click to Start</button>
-              <script type="importmap">
-                  {
-                      "imports": {
-                          "three": "https://cdn.jsdelivr.net/npm/three@0.177.0/build/three.module.js",
-                          "three/examples/jsm/controls/PointerLockControls.js": "https://cdn.jsdelivr.net/npm/three@0.177.0/examples/jsm/controls/PointerLockControls.js",
-                          "three/examples/jsm/loaders/GLTFLoader.js": "https://cdn.jsdelivr.net/npm/three@0.177.0/examples/jsm/loaders/GLTFLoader.js"
-                      }
-                  }
-              </script>
               <script type="module" src="main.js"></script>
           </body>
           </html>
