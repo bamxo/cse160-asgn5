@@ -12,5 +12,10 @@ export default {
   },
   optimizeDeps: {
     include: ['three']
+  },
+  define: {
+    // Ensure proper polyfills for Node.js APIs
+    'process.env': {},
+    'global': {}
   }
 } 
